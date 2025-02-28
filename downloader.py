@@ -23,14 +23,14 @@ def download_playlist(link, playlist_name, playlists_dir="Playlists", archive_fi
 
         ydl_opts = {
             'outtmpl': os.path.join(playlist_path, '%(title)s.%(ext)s'),
-            'format': 'bestaudio/best',
+            'format': 'bestaudio',
             'postprocessors': [{
                 'key': 'FFmpegExtractAudio',
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
             }],
             'cookiefile': 'cookies.txt',
-            'download_archive': archive_file,  # Prevents re-downloading
+            'download_archive': archive_file,
             'ignoreerrors': True,
             'sleep_interval': 0.1,  # Adds a 1-second delay between requests
             'max_sleep_interval': 1
