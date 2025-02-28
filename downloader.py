@@ -1,5 +1,5 @@
 import os
-import pandas as pd
+import json
 import yt_dlp
 
 def log_failed_download(link, reason):
@@ -45,19 +45,25 @@ def download_playlist(link, playlist_name, playlists_dir="Playlists", archive_fi
         print(f"Failed to download {link}: {e}")
 
 def main():
-    excel_file = "links.xlsx"  # Change this to the actual Excel file path
-    df = pd.read_excel(excel_file)
-    
-    required_columns = {'Links', 'Playlist_Name'}
-    if not required_columns.issubset(df.columns):
-        print("Error: Excel file must contain 'Links' and 'Playlist_Name' columns.")
+    json_file = "links.json"  # Change this to the actual JSON file path
+
+    # Load the JSON file
+    try:
+        with open(json_file, "r", encoding="utf-8") as f:
+            playlists = json.load(f)
+    except Exception as e:
+        print(f"Error loading JSON file: {e}")
+        return
+
+    if not isinstance(playlists, list) or not all('link' in p and 'playlist_name' in p for p in playlists):
+        print("Error: JSON must be a list of objects with 'link' and 'playlist_name'.")
         return
     
     os.makedirs("Playlists", exist_ok=True)
     archive_file = "downloaded_archive.txt"
 
-    for _, row in df.dropna(subset=['Links', 'Playlist_Name']).iterrows():
-        download_playlist(row['Links'], row['Playlist_Name'], archive_file=archive_file)
+    for playlist in playlists:
+        download_playlist(playlist['link'], playlist['playlist_name'], archive_file=archive_file)
 
 if __name__ == "__main__":
     main()
