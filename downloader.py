@@ -32,8 +32,8 @@ def download_playlist(link, playlist_name, playlists_dir="Playlists", archive_fi
             'cookiefile': 'cookies.txt',
             'download_archive': archive_file,  # Prevents re-downloading
             'ignoreerrors': True,
-            'sleep_interval': 0.5,  # Adds a 1-second delay between requests
-            'max_sleep_interval': 3
+            'sleep_interval': 0.1,  # Adds a 1-second delay between requests
+            'max_sleep_interval': 1
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
