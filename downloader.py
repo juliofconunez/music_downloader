@@ -29,8 +29,11 @@ def download_playlist(link, playlist_name, playlists_dir="Playlists", archive_fi
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
             }],
-            'cookies': 'cookies.txt',  # Use cookies to bypass restrictions
+            'cookiefile': 'cookies.txt',
             'download_archive': archive_file,  # Prevents re-downloading
+            'ignoreerrors': True,
+            'sleep_interval': 0.5,  # Adds a 1-second delay between requests
+            'max_sleep_interval': 3
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
@@ -74,13 +77,14 @@ def process_json_files(directory):
         artist_dir = os.path.join("Playlists", artist_name)
         os.makedirs(artist_dir, exist_ok=True)
 
-        archive_file = os.path.join(artist_dir, "downloaded_archive.txt")  # Store archive per artist
+        #archive_file = os.path.join(artist_dir, "downloaded_archive.txt")  # Store archive per artist
 
         for playlist in playlists:
             download_playlist('https://www.youtube.com/playlist?list='+playlist['link'], 
                               playlist['playlist_name'], 
-                              artist_dir, 
-                              archive_file)
+                              artist_dir 
+                              #,archive_file
+                              )
 
 def main():
     links_dir = "Links"
