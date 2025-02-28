@@ -29,8 +29,7 @@ def download_playlist(link, playlist_name, playlists_dir="Playlists", archive_fi
                 'preferredcodec': 'mp3',
                 'preferredquality': '192',
             }],
-            'cookiefile': 'cookies.txt',  # Use cookies to bypass restrictions
-            'noplaylist': True,  # Ensures each entry is treated as a playlist
+            'cookies': 'cookies.txt',  # Use cookies to bypass restrictions
             'download_archive': archive_file,  # Prevents re-downloading
         }
 
@@ -44,26 +43,58 @@ def download_playlist(link, playlist_name, playlists_dir="Playlists", archive_fi
         log_failed_download(link, str(e))
         print(f"Failed to download {link}: {e}")
 
+
+def process_json_files(directory):
+    """Process all JSON files in the given directory."""
+    json_files = [f for f in os.listdir(directory) if f.endswith('.json')]
+
+    if not json_files:
+        print("No JSON files found in the 'Links' directory.")
+        return
+
+    for json_file in json_files:
+        json_path = os.path.join(directory, json_file)
+
+        # Extract artist name from file name (e.g., "Eminem.json" -> "Eminem")
+        artist_name = os.path.splitext(json_file)[0]
+
+        # Load JSON file
+        try:
+            with open(json_path, "r", encoding="utf-8") as f:
+                playlists = json.load(f)
+        except Exception as e:
+            print(f"Error loading {json_file}: {e}")
+            continue
+
+        if not isinstance(playlists, list) or not all('link' in p and 'playlist_name' in p for p in playlists):
+            print(f"Error: {json_file} must contain a list of objects with 'link' and 'playlist_name'.")
+            continue
+
+        # Create artist directory inside "Playlists"
+        artist_dir = os.path.join("Playlists", artist_name)
+        os.makedirs(artist_dir, exist_ok=True)
+
+        archive_file = os.path.join(artist_dir, "downloaded_archive.txt")  # Store archive per artist
+
+        for playlist in playlists:
+            download_playlist('https://www.youtube.com/playlist?list='+playlist['link'], 
+                              playlist['playlist_name'], 
+                              artist_dir, 
+                              archive_file)
+
 def main():
-    json_file = "links.json"  # Change this to the actual JSON file path
-
-    # Load the JSON file
-    try:
-        with open(json_file, "r", encoding="utf-8") as f:
-            playlists = json.load(f)
-    except Exception as e:
-        print(f"Error loading JSON file: {e}")
-        return
-
-    if not isinstance(playlists, list) or not all('link' in p and 'playlist_name' in p for p in playlists):
-        print("Error: JSON must be a list of objects with 'link' and 'playlist_name'.")
-        return
+    links_dir = "Links"
     
-    os.makedirs("Playlists", exist_ok=True)
-    archive_file = "downloaded_archive.txt"
+    if not os.path.exists(links_dir):
+        print(f"Directory '{links_dir}' not found. Creating it...")
+        os.makedirs(links_dir, exist_ok=True)
+        return
 
-    for playlist in playlists:
-        download_playlist(playlist['link'], playlist['playlist_name'], archive_file=archive_file)
+    process_json_files(links_dir)
 
 if __name__ == "__main__":
     main()
+
+
+
+#  {"playlist_name": "Background", "link": "PLLXguAz8nvimS74N8mj0OIrkhfmxe0ggU"},
