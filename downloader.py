@@ -1,6 +1,4 @@
-import os
-import json
-import yt_dlp
+import os, json, yt_dlp, re, platform
 
 def log_failed_download(link, reason):
     with open("failed_downloads.log", "a", encoding="utf-8") as log_file:
@@ -15,25 +13,55 @@ def create_m3u_playlist(playlist_path, playlist_name):
             if file.endswith(".mp3"):  # Only include audio files
                 m3u.write(file + "\n")
 
+def sanitize_filename(filename):
+    # Replace invalid characters with underscores
+    return re.sub(r'[<>:"/\\|?*]', '_', filename)
+
 def download_playlist(link, playlist_name, playlists_dir="Playlists", archive_file="downloaded_archive.txt"):
+
     try:
         # Create directory for the playlist
         playlist_path = os.path.join(playlists_dir, playlist_name)
         os.makedirs(playlist_path, exist_ok=True)
 
+        delete_cmd = (
+            f'if exist "{os.path.join(playlist_path, "%(title)s.%(ext)s.webp")}" del /f "{os.path.join(playlist_path, "%(title)s.%(ext)s.webp")}"'
+            if platform.system() == 'Windows'
+            else f'rm -- "{os.path.join(playlist_path, sanitize_filename("%(title)s.%(ext)s.webp"))}"'
+        )
+
         ydl_opts = {
-            'outtmpl': os.path.join(playlist_path, '%(title)s.%(ext)s'),
-            'format': 'bestaudio',
-            'postprocessors': [{
-                'key': 'FFmpegExtractAudio',
-                'preferredcodec': 'mp3',
-                'preferredquality': '192',
-            }],
+            'outtmpl': os.path.join(playlist_path, sanitize_filename('%(title)s.%(ext)s')),  # Sanitize filenames
+            'format': 'bestaudio[ext=webm]/bestaudio',  # Prioritizes Opus format
+            'writethumbnail': True,  # Required for embedding thumbnails
             'cookiefile': 'cookies.txt',
             'download_archive': archive_file,
             'ignoreerrors': True,
-            'sleep_interval': 0.1,  # Adds a 1-second delay between requests
-            'max_sleep_interval': 1
+            'sleep_interval': 0.1,
+            'max_sleep_interval': 1,
+            'postprocessors': [
+                # Opus audio extraction (no quality specified = best quality)
+                {
+                    'key': 'FFmpegExtractAudio',
+                    'preferredcodec': 'opus',
+                },
+                # Metadata embedding (uses original metadata from YouTube)
+                {
+                    'key': 'FFmpegMetadata',
+                    'add_metadata': True,  # Automatically uses original metadata
+                },
+                # Thumbnail embedding for Opus
+                {
+                    'key': 'EmbedThumbnail',
+                },
+                # Cleanup thumbnail file (Windows-compatible)
+                {
+                    'key': 'ExecAfterDownload',
+                    'exec_cmd': delete_cmd,
+                    'when': 'after_move'
+                }
+            ],
+            # 'ffmpeg_location': 'C:/path/to/ffmpeg.exe'  # Uncomment if needed
         }
 
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
