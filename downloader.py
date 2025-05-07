@@ -34,7 +34,7 @@ def download_playlist(link, playlist_name, playlists_dir="Playlists", archive_fi
             'outtmpl': os.path.join(playlist_path, sanitize_filename('%(title)s.%(ext)s')),  # Sanitize filenames
             'format': 'bestaudio[ext=webm]/bestaudio',  # Prioritizes Opus format
             'writethumbnail': True,  # Required for embedding thumbnails
-            'cookiefile': 'cookies.txt',
+            ##'cookiefile': 'cookies.txt',
             'download_archive': archive_file,
             'ignoreerrors': True,
             'sleep_interval': 0.1,
