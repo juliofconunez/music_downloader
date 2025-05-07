@@ -55,11 +55,11 @@ def download_playlist(link, playlist_name, playlists_dir="Playlists", archive_fi
                     'key': 'EmbedThumbnail',
                 },
                 # Cleanup thumbnail file (Windows-compatible)
-                {
-                    'key': 'ExecAfterDownload',
-                    'exec_cmd': delete_cmd,
-                    'when': 'after_move'
-                }
+                # {
+                #     'key': 'ExecAfterDownload',
+                #     'exec_cmd': delete_cmd,
+                #     'when': 'after_move'
+                # }
             ],
             # 'ffmpeg_location': 'C:/path/to/ffmpeg.exe'  # Uncomment if needed
         }
