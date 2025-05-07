@@ -10,7 +10,7 @@ def create_m3u_playlist(playlist_path, playlist_name):
     
     with open(m3u_file, "w", encoding="utf-8") as m3u:
         for file in sorted(os.listdir(playlist_path)):
-            if file.endswith(".mp3"):  # Only include audio files
+            if file.endswith(".opus"):  # Only include audio files
                 m3u.write(file + "\n")
 
 def sanitize_filename(filename):
@@ -53,7 +53,8 @@ def download_playlist(link, playlist_name, playlists_dir="Playlists", archive_fi
                 # Thumbnail embedding for Opus
                 {
                     'key': 'EmbedThumbnail',
-                },
+                }
+                #wh,
                 # Cleanup thumbnail file (Windows-compatible)
                 # {
                 #     'key': 'ExecAfterDownload',
