@@ -7,16 +7,6 @@ def log_failed_download(link, reason):
     with open("failed_downloads.log", "a", encoding="utf-8") as log_file:
         log_file.write(f"{link} - {reason}\n")
 
-def create_m3u_playlist(m3u_dir, playlist_name, song_files):
-    m3u_file = os.path.join(m3u_dir, f"{playlist_name}.m3u")
-    with open(m3u_file, "w", encoding="utf-8") as m3u:
-        m3u.write("#EXTM3U\n")
-        for song_path in song_files:
-            rel_path = os.path.relpath(song_path, start=m3u_dir)
-            title = os.path.splitext(os.path.basename(song_path))[0]
-            m3u.write(f"#EXTINF:-1,{title}\n")
-            m3u.write(rel_path + "\n")
-
 def sanitize_filename(filename):
     return re.sub(r'[<>:"/\\|?*]', '_', filename)
 
@@ -104,6 +94,28 @@ def move_playlist_metadata(songs_dir, meta_dir, playlist_name):
     # No se usa la miniatura en el .m3u, pero se guarda por si la quieres usar manualmente
     return thumb_path
 
+def create_playlist_folder_with_symlinks(playlists_root, playlist_name, song_files):
+    playlist_dir = os.path.join(playlists_root, sanitize_filename(playlist_name))
+    os.makedirs(playlist_dir, exist_ok=True)
+    symlink_names = []
+    for song_path in song_files:
+        song_name = os.path.basename(song_path)
+        symlink_path = os.path.join(playlist_dir, song_name)
+        # Si el symlink ya existe, elimínalo para evitar error
+        if os.path.islink(symlink_path) or os.path.exists(symlink_path):
+            os.remove(symlink_path)
+        os.symlink(os.path.abspath(song_path), symlink_path)
+        symlink_names.append(song_name)
+    # Crear el .m3u con solo los nombres de los symlinks
+    m3u_file = os.path.join(playlist_dir, f"{playlist_name}.m3u")
+    with open(m3u_file, "w", encoding="utf-8") as m3u:
+        m3u.write("#EXTM3U\n")
+        for name in symlink_names:
+            title = os.path.splitext(name)[0]
+            m3u.write(f"#EXTINF:-1,{title}\n")
+            m3u.write(f"{name}\n")
+    return playlist_dir
+
 def main():
     print("=== Descargador de música/videos de YouTube ===")
     print("Escribe 'help' para ver instrucciones o presiona Enter para continuar.")
@@ -146,15 +158,14 @@ Instrucciones:
                 print("Debes ingresar un nombre para la playlist.")
                 continue
             songs_dir = default_songs_dir
-            m3u_dir = default_playlists_dir
             before_files = set(os.listdir(songs_dir))
             print(f"Descargando playlist: {playlist_link}")
             download(playlist_link, True, audio_only, file_format, songs_dir)
             song_files = get_downloaded_files(songs_dir, before_files, file_format)
             song_files = [os.path.abspath(f) for f in song_files]
             move_playlist_metadata(songs_dir, metadata_dir, playlist_name)
-            create_m3u_playlist(m3u_dir, playlist_name, song_files)
-            print(f"Descarga y playlist .m3u finalizadas para: {playlist_name}\n")
+            create_playlist_folder_with_symlinks(default_playlists_dir, playlist_name, song_files)
+            print(f"Playlist creada en carpeta: {os.path.join(default_playlists_dir, playlist_name)}\n")
         # Procesar canciones individuales
         if canciones:
             use_custom_folder = get_valid_option("¿Guardar canciones sueltas en carpeta personalizada? (s/n): ", ["s", "n"])
