@@ -101,14 +101,14 @@ def create_playlist_folder_with_symlinks(playlists_root, playlist_name, song_fil
     for song_path in song_files:
         song_name = os.path.basename(song_path)
         symlink_path = os.path.join(playlist_dir, song_name)
-        # Convertir la ruta de Termux a la ruta de Android
-        android_path = song_path.replace(
+        # Convertir la ruta de Termux a la ruta de Android para el destino del symlink
+        android_song_path = song_path.replace(
             os.path.expanduser("~/storage/"), "/storage/emulated/0/"
         )
         # Si el symlink ya existe, elimínalo para evitar error
         if os.path.islink(symlink_path) or os.path.exists(symlink_path):
             os.remove(symlink_path)
-        os.symlink(android_path, symlink_path)
+        os.symlink(android_song_path, symlink_path)
         symlink_names.append(song_name)
     # Crear el .m3u con solo los nombres de los symlinks
     m3u_file = os.path.join(playlist_dir, f"{playlist_name}.m3u")
