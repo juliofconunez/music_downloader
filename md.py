@@ -115,8 +115,8 @@ Instrucciones:
 - Elige si quieres solo audio o audio+video.
 - Puedes elegir el formato de salida (audio: opus, mp3, m4a | video: mkv, mp4).
         """)
-    default_songs_dir = "~/storage/music/Songs"
-    default_playlists_dir = "~/storage/music/Playlists"
+    default_songs_dir = os.path.expanduser("~/storage/music/Songs")
+    default_playlists_dir = os.path.expanduser("~/storage/music/Playlists")
     metadata_dir = os.path.join(default_playlists_dir, ".metadata")
     os.makedirs(default_songs_dir, exist_ok=True)
     os.makedirs(default_playlists_dir, exist_ok=True)
