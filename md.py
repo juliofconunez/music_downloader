@@ -132,12 +132,16 @@ Instrucciones:
         modo = get_valid_option("¿Solo audio o audio+video? (1) Solo audio, (2) Audio+Video [1/2]: ", ["1", "2"])
         audio_only = modo == "1"
         if audio_only:
-            file_format = get_valid_option("Formato de audio (opus/mp3/m4a): ", ["opus", "mp3", "m4a"])
+            file_format = input("Formato de audio (opus/mp3/m4a) [opus]: ").strip().lower()
+            if file_format not in ["opus", "mp3", "m4a"]:
+                file_format = "opus"
             media_dir = songs_dir
             playlists_dir = songs_playlists_dir
             archive_file = songs_archive_file
         else:
-            file_format = get_valid_option("Formato de video (mkv/mp4): ", ["mkv", "mp4"])
+            file_format = input("Formato de video (mkv/mp4) [mp4]: ").strip().lower()
+            if file_format not in ["mkv", "mp4"]:
+                file_format = "mp4"
             media_dir = videos_dir
             playlists_dir = videos_playlists_dir
             archive_file = videos_archive_file
