@@ -70,7 +70,7 @@ def download(link, is_playlist, audio_only, file_format, media_dir, archive_file
                 'postprocessors': [
                     {'key': 'FFmpegExtractAudio', 'preferredcodec': file_format},
                     {'key': 'FFmpegMetadata', 'add_metadata': True},
-                    {'key': 'EmbedThumbnail', 'cleanup': True},
+                    {'key': 'EmbedThumbnail'},
                 ],
             }
         else:
@@ -87,7 +87,7 @@ def download(link, is_playlist, audio_only, file_format, media_dir, archive_file
                 'postprocessors': [
                     {'key': 'FFmpegVideoConvertor', 'preferedformat': file_format},
                     {'key': 'FFmpegMetadata', 'add_metadata': True},
-                    {'key': 'EmbedThumbnail', 'cleanup': True},
+                    {'key': 'EmbedThumbnail'},
                 ],
             }
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
