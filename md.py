@@ -101,6 +101,7 @@ def main():
             playlist_name, yt_ids = get_yt_playlist_info(playlist_link)
             print(f"Descargando playlist: {playlist_link}")
             regenerate_archive_from_folder(p["media"], p["archive"], p["format"])
+            print(p["archive"])
             download(playlist_link, True, key == "audio", p["format"], p["media"], p["archive"])
             files = [os.path.join(p["media"], f) for f in os.listdir(p["media"]) if any(yt_id in f for yt_id in yt_ids) and f.endswith(f".{p['format']}")]
             create_m3u_playlist(p["playlists"], playlist_name, files)
