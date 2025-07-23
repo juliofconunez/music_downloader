@@ -91,34 +91,17 @@ def move_playlist_metadata(songs_dir, meta_dir, playlist_name):
                 thumb_path = dst
             except Exception:
                 pass
-    # No se usa la miniatura en el .m3u, pero se guarda por si la quieres usar manualmente
     return thumb_path
 
-def create_playlist_folder_with_symlinks(playlists_root, playlist_name, song_files):
-    playlist_dir = os.path.join(playlists_root, sanitize_filename(playlist_name))
-    os.makedirs(playlist_dir, exist_ok=True)
-    symlink_names = []
-    for song_path in song_files:
-        song_name = os.path.basename(song_path)
-        symlink_path = os.path.join(playlist_dir, song_name)
-        # Convertir la ruta de Termux a la ruta de Android para el destino del symlink
-        android_song_path = song_path.replace(
-            os.path.expanduser("~/storage/"), "/storage/emulated/0/"
-        )
-        # Si el symlink ya existe, elimínalo para evitar error
-        if os.path.islink(symlink_path) or os.path.exists(symlink_path):
-            os.remove(symlink_path)
-        os.symlink(android_song_path, symlink_path)
-        symlink_names.append(song_name)
-    # Crear el .m3u con solo los nombres de los symlinks
-    m3u_file = os.path.join(playlist_dir, f"{playlist_name}.m3u")
+def create_m3u_playlist(songs_dir, playlist_name, song_files):
+    m3u_file = os.path.join(songs_dir, f"{playlist_name}.m3u")
     with open(m3u_file, "w", encoding="utf-8") as m3u:
         m3u.write("#EXTM3U\n")
-        for name in symlink_names:
-            title = os.path.splitext(name)[0]
+        for song_path in song_files:
+            song_name = os.path.basename(song_path)
+            title = os.path.splitext(song_name)[0]
             m3u.write(f"#EXTINF:-1,{title}\n")
-            m3u.write(f"{name}\n")
-    return playlist_dir
+            m3u.write(f"{song_name}\n")
 
 def main():
     print("=== Descargador de música/videos de YouTube ===")
@@ -131,11 +114,9 @@ Instrucciones:
 - Elige si quieres solo audio o audio+video.
 - Puedes elegir el formato de salida (audio: opus, mp3, m4a | video: mkv, mp4).
         """)
-    default_songs_dir = os.path.expanduser("~/storage/music/Songs")
-    default_playlists_dir = os.path.expanduser("~/storage/music/Playlists")
-    metadata_dir = os.path.join(default_playlists_dir, ".metadata")
-    os.makedirs(default_songs_dir, exist_ok=True)
-    os.makedirs(default_playlists_dir, exist_ok=True)
+    songs_dir = os.path.expanduser("~/storage/music/Songs")
+    metadata_dir = os.path.join(songs_dir, ".metadata")
+    os.makedirs(songs_dir, exist_ok=True)
     os.makedirs(metadata_dir, exist_ok=True)
     while True:
         links = get_links()
@@ -161,27 +142,15 @@ Instrucciones:
             if not playlist_name:
                 print("Debes ingresar un nombre para la playlist.")
                 continue
-            songs_dir = default_songs_dir
             before_files = set(os.listdir(songs_dir))
             print(f"Descargando playlist: {playlist_link}")
             download(playlist_link, True, audio_only, file_format, songs_dir)
             song_files = get_downloaded_files(songs_dir, before_files, file_format)
-            song_files = [os.path.abspath(f) for f in song_files]
             move_playlist_metadata(songs_dir, metadata_dir, playlist_name)
-            create_playlist_folder_with_symlinks(default_playlists_dir, playlist_name, song_files)
-            print(f"Playlist creada en carpeta: {os.path.join(default_playlists_dir, playlist_name)}\n")
+            create_m3u_playlist(songs_dir, playlist_name, song_files)
+            print(f"Playlist .m3u creada en: {os.path.join(songs_dir, playlist_name)}.m3u\n")
         # Procesar canciones individuales
         if canciones:
-            use_custom_folder = get_valid_option("¿Guardar canciones sueltas en carpeta personalizada? (s/n): ", ["s", "n"])
-            if use_custom_folder == "s":
-                carpeta = input("Nombre de la carpeta para guardar las canciones sueltas: ").strip()
-                if not carpeta:
-                    print("Debes ingresar un nombre para la carpeta.")
-                    continue
-                songs_dir = os.path.join(default_songs_dir, carpeta)
-            else:
-                songs_dir = default_songs_dir
-            os.makedirs(songs_dir, exist_ok=True)
             for link in canciones:
                 print(f"Descargando: {link}")
                 download(link, False, audio_only, file_format, songs_dir)
