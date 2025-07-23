@@ -37,7 +37,7 @@ def get_links():
 def is_youtube_playlist(link):
     return "playlist?list=" in link or "&list=" in link
 
-def download(link, is_playlist, audio_only, file_format, songs_dir, archive_file="downloaded_archive.txt"):
+def download(link, is_playlist, audio_only, file_format, songs_dir, archive_file="default.txt"):
     try:
         ext = f".{file_format}"
         outtmpl = os.path.join(songs_dir, sanitize_filename('%(title)s.%(ext)s'))
@@ -122,6 +122,8 @@ Instrucciones:
     os.makedirs(videos_dir, exist_ok=True)
     os.makedirs(videos_playlists_dir, exist_ok=True)
     os.makedirs(metadata_dir, exist_ok=True)
+    songs_archive_file = "downloaded_songs_archive.txt"
+    videos_archive_file = "downloaded_videos_archive.txt"
     while True:
         links = get_links()
         if not links:
@@ -133,10 +135,12 @@ Instrucciones:
             file_format = get_valid_option("Formato de audio (opus/mp3/m4a): ", ["opus", "mp3", "m4a"])
             media_dir = songs_dir
             playlists_dir = songs_playlists_dir
+            archive_file = songs_archive_file
         else:
             file_format = get_valid_option("Formato de video (mkv/mp4): ", ["mkv", "mp4"])
             media_dir = videos_dir
             playlists_dir = videos_playlists_dir
+            archive_file = videos_archive_file
         playlists = []
         canciones = []
         for link in links:
@@ -152,7 +156,7 @@ Instrucciones:
                 continue
             before_files = set(os.listdir(media_dir))
             print(f"Descargando playlist: {playlist_link}")
-            download(playlist_link, True, audio_only, file_format, media_dir)
+            download(playlist_link, True, audio_only, file_format, media_dir, archive_file)
             media_files = get_downloaded_files(media_dir, before_files, file_format)
             move_playlist_metadata(media_dir, metadata_dir, playlist_name)
             create_m3u_playlist(playlists_dir, playlist_name, media_files)
@@ -161,7 +165,7 @@ Instrucciones:
         if canciones:
             for link in canciones:
                 print(f"Descargando: {link}")
-                download(link, False, audio_only, file_format, media_dir)
+                download(link, False, audio_only, file_format, media_dir, archive_file)
             print("Descarga finalizada para canciones/videos sueltos.\n")
 
 if __name__ == "__main__":
