@@ -1,6 +1,7 @@
 import os
 import yt_dlp
 import re
+import tempfile
 
 def log_failed_download(link, reason):
     with open("failed_downloads.log", "a", encoding="utf-8") as log_file:
@@ -112,6 +113,31 @@ def get_downloaded_files(media_dir, before_files, file_format):
     ext = f".{file_format}"
     return [os.path.join(media_dir, f) for f in sorted(new_files) if f.endswith(ext)]
 
+def clean_archive_for_missing_files(media_dir, archive_file, yt_ids, file_format):
+    """Elimina del archive los IDs que no tienen archivo en disco."""
+    if not os.path.exists(archive_file):
+        return
+    with open(archive_file, "r", encoding="utf-8") as f:
+        archived_ids = [line.strip() for line in f if line.strip()]
+    # IDs de la playlist que están en el archive
+    ids_to_check = set(yt_ids) & set(archived_ids)
+    # IDs que no tienen archivo en disco
+    ids_missing = []
+    for yt_id in ids_to_check:
+        found = False
+        for fname in os.listdir(media_dir):
+            if fname.endswith(f".{file_format}") and yt_id in fname:
+                found = True
+                break
+        if not found:
+            ids_missing.append(yt_id)
+    # Si hay IDs a eliminar, reescribe el archive sin ellos
+    if ids_missing:
+        with open(archive_file, "w", encoding="utf-8") as f:
+            for id_line in archived_ids:
+                if id_line not in ids_missing:
+                    f.write(id_line + "\n")
+
 def main():
     print("=== Descargador de música/videos de YouTube ===")
     print("Escribe 'help' para ver instrucciones o presiona Enter para continuar.")
@@ -154,6 +180,7 @@ Instrucciones:
         for playlist_link in playlists:
             playlist_name, yt_ids = get_yt_playlist_info(playlist_link)
             print(f"Descargando playlist: {playlist_link}")
+            clean_archive_for_missing_files(media_dir, archive_file, yt_ids, file_format)
             download(playlist_link, True, audio_only, file_format, media_dir, archive_file)
             all_files = find_files_by_ids(media_dir, yt_ids, file_format)
             create_m3u_playlist(playlists_dir, playlist_name, all_files)
