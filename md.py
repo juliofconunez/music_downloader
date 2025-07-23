@@ -2,10 +2,6 @@ import os
 import yt_dlp
 import re
 
-def log_failed_download(link, reason):
-    with open("failed_downloads.log", "a", encoding="utf-8") as log_file:
-        log_file.write(f"{link} - {reason}\n")
-
 def sanitize_filename(filename):
     return re.sub(r'[<>:"/\\|?*]', '_', filename)
 
@@ -22,30 +18,23 @@ def get_yt_playlist_info(playlist_url):
         entries = info.get('entries', info.get('items', []))
         return sanitize_filename(info.get('title', 'playlist')), [e['id'] for e in entries if 'id' in e]
 
+def find_file_by_id(media_dir, yt_id):
+    for fname in os.listdir(media_dir):
+        if re.search(rf'\s\[{re.escape(yt_id)}\]\.', fname):
+            return os.path.join(media_dir, fname)
+    return None
+
 def remove_leftover_images(media_dir):
     for fname in os.listdir(media_dir):
         if fname.lower().endswith(('.jpg', '.jpeg', '.webp', '.png')):
             try: os.remove(os.path.join(media_dir, fname))
             except Exception: pass
 
-def regenerate_archive_from_folder(media_dir, archive_file):
-    ids = []
-    for fname in os.listdir(media_dir):
-        # Busca el patrón: espacio + [ID] en cualquier parte antes de la extensión
-        match = re.search(r'\s\[(.+?)\]\.', fname)
-        if match:
-            yt_id = match.group(1)
-            ids.append(yt_id)
-    with open(archive_file, "w", encoding="utf-8") as f:
-        for yt_id in ids:
-            f.write(yt_id + "\n")
-
-def download(link, is_playlist, audio_only, file_format, media_dir, archive_file):
+def download(link, is_playlist, audio_only, file_format, media_dir):
     outtmpl = os.path.join(media_dir, '%(title)s [%(id)s].%(ext)s')
     ydl_opts = {
         'outtmpl': outtmpl,
         'format': f'bestaudio[ext=webm]/bestaudio' if audio_only else 'bestvideo+bestaudio/best',
-        'download_archive': archive_file,
         'ignoreerrors': True,
         'sleep_interval': 0.1,
         'max_sleep_interval': 1,
@@ -57,13 +46,9 @@ def download(link, is_playlist, audio_only, file_format, media_dir, archive_file
             {'key': 'EmbedThumbnail'},
         ],
     }
-    try:
-        with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-            ydl.download([link])
-        remove_leftover_images(media_dir)
-    except Exception as e:
-        log_failed_download(link, str(e))
-        print(f"Error al descargar {link}: {e}")
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([link])
+    remove_leftover_images(media_dir)
 
 def create_m3u_playlist(m3u_dir, playlist_name, media_files):
     m3u_file = os.path.join(m3u_dir, f"{playlist_name}.m3u")
@@ -77,10 +62,9 @@ def main():
     print("Escribe 'help' para ver instrucciones o presiona Enter para continuar.")
     if input().strip().lower() == "help":
         print("Instrucciones:\n- Pega enlaces de YouTube (uno por línea).\n- El programa detecta playlists o canciones.\n- Elige solo audio o audio+video.\n")
-    # Rutas destino memoria interna
     storage = {
-        "audio": {"media": os.path.expanduser("~/storage/music/Songs"), "playlists": os.path.expanduser("~/storage/music/Playlists"), "archive": "downloaded_songs_archive.txt", "format": "opus"},
-        "video": {"media": os.path.expanduser("~/storage/movies/Videos"), "playlists": os.path.expanduser("~/storage/movies/Playlists"), "archive": "downloaded_videos_archive.txt", "format": "mp4"},
+        "audio": {"media": os.path.expanduser("~/storage/music/Songs"), "playlists": os.path.expanduser("~/storage/music/Playlists"), "format": "opus"},
+        "video": {"media": os.path.expanduser("~/storage/movies/Videos"), "playlists": os.path.expanduser("~/storage/movies/Playlists"), "format": "mp4"},
     }
     for k in storage:
         os.makedirs(storage[k]["media"], exist_ok=True)
@@ -98,19 +82,26 @@ def main():
             (playlists if is_youtube_playlist(link) else canciones).append(link)
         for playlist_link in playlists:
             playlist_name, yt_ids = get_yt_playlist_info(playlist_link)
-            print(f"Descargando playlist: {playlist_link}")
-            regenerate_archive_from_folder(p["media"], p["archive"])
-            download(playlist_link, True, key == "audio", p["format"], p["media"], p["archive"])
-            files = [os.path.join(p["media"], f) for f in os.listdir(p["media"]) if any(yt_id in f for yt_id in yt_ids)]
+            print(f"Procesando playlist: {playlist_link}")
+            files = []
+            for yt_id in yt_ids:
+                fpath = find_file_by_id(p["media"], yt_id)
+                if not fpath:
+                    # Descarga solo el video/canción faltante
+                    download(f"https://www.youtube.com/watch?v={yt_id}", False, key == "audio", p["format"], p["media"])
+                    fpath = find_file_by_id(p["media"], yt_id)
+                if fpath:
+                    files.append(fpath)
             create_m3u_playlist(p["playlists"], playlist_name, files)
             print(f"Playlist .m3u creada en: {os.path.join(p['playlists'], playlist_name)}.m3u\n")
         for link in canciones:
-            print(f"Descargando: {link}")
+            print(f"Procesando: {link}")
             with yt_dlp.YoutubeDL({'quiet': True, 'skip_download': True}) as ydl:
                 info = ydl.extract_info(link, download=False)
                 yt_id = info['id']
-            regenerate_archive_from_folder(p["media"], p["archive"])
-            download(link, False, key == "audio", p["format"], p["media"], p["archive"])
+            fpath = find_file_by_id(p["media"], yt_id)
+            if not fpath:
+                download(link, False, key == "audio", p["format"], p["media"])
         if canciones:
             print("Descarga finalizada para canciones/videos sueltos.\n")
 
