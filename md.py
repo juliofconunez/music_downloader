@@ -13,7 +13,8 @@ def create_m3u_playlist(m3u_dir, playlist_name, song_files, meta_path=None):
         if meta_path:
             m3u.write(f"#META_THUMBNAIL={meta_path}\n")
         for song_path in song_files:
-            m3u.write(song_path + "\n")
+            abs_path = os.path.abspath(song_path)
+            m3u.write(abs_path + "\n")
 
 def sanitize_filename(filename):
     return re.sub(r'[<>:"/\\|?*]', '_', filename)
