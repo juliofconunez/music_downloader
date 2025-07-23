@@ -10,8 +10,9 @@ def create_m3u_playlist(m3u_dir, playlist_name, media_files):
     m3u_file = os.path.join(m3u_dir, f"{playlist_name}.m3u")
     with open(m3u_file, "w", encoding="utf-8") as m3u:
         for media_path in media_files:
-            media_name = os.path.basename(media_path)
-            m3u.write(f"{media_name}\n")
+            # Calcula la ruta relativa desde la carpeta de playlists
+            rel_path = os.path.relpath(media_path, start=m3u_dir)
+            m3u.write(f"{rel_path}\n")
 
 def sanitize_filename(filename):
     return re.sub(r'[<>:"/\\|?*]', '_', filename)
