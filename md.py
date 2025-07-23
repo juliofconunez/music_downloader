@@ -56,7 +56,6 @@ def find_files_by_ids(media_dir, yt_ids, file_format):
 def download(link, is_playlist, audio_only, file_format, media_dir, archive_file):
     try:
         ext = f".{file_format}"
-        # Incluye el ID de YouTube en el nombre del archivo para fácil identificación
         outtmpl = os.path.join(media_dir, '%(title)s [%(id)s].%(ext)s')
         if audio_only:
             ydl_opts = {
@@ -67,15 +66,13 @@ def download(link, is_playlist, audio_only, file_format, media_dir, archive_file
                 'sleep_interval': 0.1,
                 'max_sleep_interval': 1,
                 'noplaylist': not is_playlist,
+                'writethumbnail': True,
                 'postprocessors': [
                     {'key': 'FFmpegExtractAudio', 'preferredcodec': file_format},
                     {'key': 'FFmpegMetadata', 'add_metadata': True},
+                    {'key': 'EmbedThumbnail', 'cleanup': True},
                 ],
             }
-            # Solo para descargas individuales: embebe thumbnail
-            if not is_playlist:
-                ydl_opts['writethumbnail'] = True
-                ydl_opts['postprocessors'].append({'key': 'EmbedThumbnail'})
         else:
             ydl_opts = {
                 'outtmpl': outtmpl,
@@ -86,15 +83,13 @@ def download(link, is_playlist, audio_only, file_format, media_dir, archive_file
                 'max_sleep_interval': 1,
                 'noplaylist': not is_playlist,
                 'merge_output_format': file_format,
+                'writethumbnail': True,
                 'postprocessors': [
                     {'key': 'FFmpegVideoConvertor', 'preferedformat': file_format},
                     {'key': 'FFmpegMetadata', 'add_metadata': True},
+                    {'key': 'EmbedThumbnail', 'cleanup': True},
                 ],
             }
-            # Solo para descargas individuales: embebe thumbnail
-            if not is_playlist:
-                ydl_opts['writethumbnail'] = True
-                ydl_opts['postprocessors'].append({'key': 'EmbedThumbnail'})
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([link])
     except Exception as e:
