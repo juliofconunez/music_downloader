@@ -96,11 +96,8 @@ def move_playlist_metadata(songs_dir, meta_dir, playlist_name):
 def create_m3u_playlist(songs_dir, playlist_name, song_files):
     m3u_file = os.path.join(songs_dir, f"{playlist_name}.m3u")
     with open(m3u_file, "w", encoding="utf-8") as m3u:
-        m3u.write("#EXTM3U\n")
         for song_path in song_files:
             song_name = os.path.basename(song_path)
-            title = os.path.splitext(song_name)[0]
-            m3u.write(f"#EXTINF:-1,{title}\n")
             m3u.write(f"{song_name}\n")
 
 def main():
