@@ -112,25 +112,28 @@ def get_downloaded_files(media_dir, before_files, file_format):
     ext = f".{file_format}"
     return [os.path.join(media_dir, f) for f in sorted(new_files) if f.endswith(ext)]
 
-def clean_archive_for_missing_files(media_dir, archive_file, file_format):
-    """Deja en el archive SOLO los IDs cuyos archivos existen en disco."""
+def clean_archive_for_missing_files(media_dir, archive_file, file_format, yt_ids):
+    """Elimina del archive SOLO los IDs de yt_ids que no tienen archivo en disco."""
     if not os.path.exists(archive_file):
         return
     with open(archive_file, "r", encoding="utf-8") as f:
         archived_ids = [line.strip() for line in f if line.strip()]
-    valid_ids = []
-    for yt_id in archived_ids:
-        found = False
-        for fname in os.listdir(media_dir):
-            if fname.endswith(f".{file_format}") and yt_id in fname:
-                found = True
-                break
-        if found:
-            valid_ids.append(yt_id)
-    # Reescribe el archive solo con los IDs válidos
-    with open(archive_file, "w", encoding="utf-8") as f:
-        for yt_id in valid_ids:
-            f.write(yt_id + "\n")
+    ids_missing = []
+    for yt_id in yt_ids:
+        if yt_id in archived_ids:
+            found = False
+            for fname in os.listdir(media_dir):
+                if fname.endswith(f".{file_format}") and yt_id in fname:
+                    found = True
+                    break
+            if not found:
+                ids_missing.append(yt_id)
+    # Reescribe el archive sin los IDs faltantes
+    if ids_missing:
+        with open(archive_file, "w", encoding="utf-8") as f:
+            for id_line in archived_ids:
+                if id_line not in ids_missing:
+                    f.write(id_line + "\n")
 
 def main():
     print("=== Descargador de música/videos de YouTube ===")
@@ -174,7 +177,7 @@ Instrucciones:
         for playlist_link in playlists:
             playlist_name, yt_ids = get_yt_playlist_info(playlist_link)
             print(f"Descargando playlist: {playlist_link}")
-            clean_archive_for_missing_files(media_dir, archive_file, file_format)
+            clean_archive_for_missing_files(media_dir, archive_file, file_format, yt_ids)
             download(playlist_link, True, audio_only, file_format, media_dir, archive_file)
             all_files = find_files_by_ids(media_dir, yt_ids, file_format)
             create_m3u_playlist(playlists_dir, playlist_name, all_files)
@@ -183,9 +186,11 @@ Instrucciones:
         if canciones:
             for link in canciones:
                 print(f"Descargando: {link}")
-                # Si quieres la misma lógica para canciones individuales, primero obtén el ID:
-                # yt_id = ... (puedes extraerlo usando yt_dlp.extract_info(link, download=False)['id'])
-                # clean_archive_for_missing_files(media_dir, archive_file, file_format, [yt_id])
+                # Obtener el ID de la canción individual:
+                with yt_dlp.YoutubeDL({'quiet': True, 'skip_download': True}) as ydl:
+                    info = ydl.extract_info(link, download=False)
+                    yt_id = info['id']
+                clean_archive_for_missing_files(media_dir, archive_file, file_format, [yt_id])
                 download(link, False, audio_only, file_format, media_dir, archive_file)
             print("Descarga finalizada para canciones/videos sueltos.\n")
 
