@@ -7,8 +7,8 @@ def log_failed_download(link, reason):
     with open("failed_downloads.log", "a", encoding="utf-8") as log_file:
         log_file.write(f"{link} - {reason}\n")
 
-def create_m3u_playlist(media_dir, playlist_name, media_files):
-    m3u_file = os.path.join(media_dir, f"{playlist_name}.m3u")
+def create_m3u_playlist(m3u_dir, playlist_name, media_files):
+    m3u_file = os.path.join(m3u_dir, f"{playlist_name}.m3u")
     with open(m3u_file, "w", encoding="utf-8") as m3u:
         for media_path in media_files:
             media_name = os.path.basename(media_path)
@@ -112,12 +112,15 @@ Instrucciones:
 - Elige si quieres solo audio o audio+video.
 - Puedes elegir el formato de salida (audio: opus, mp3, m4a | video: mkv, mp4).
         """)
-    base_dir = os.path.expanduser("~/storage/music")
-    songs_dir = os.path.join(base_dir, "Songs")
-    videos_dir = os.path.join(base_dir, "Videos")
-    metadata_dir = os.path.join(songs_dir, ".metadata")
+    songs_dir = os.path.expanduser("~/storage/music/Songs")
+    songs_playlists_dir = os.path.expanduser("~/storage/music/Playlists")
+    videos_dir = os.path.expanduser("~/storage/movies/Videos")
+    videos_playlists_dir = os.path.expanduser("~/storage/movies/Playlists")
+    metadata_dir = os.path.join(songs_playlists_dir, ".metadata")
     os.makedirs(songs_dir, exist_ok=True)
+    os.makedirs(songs_playlists_dir, exist_ok=True)
     os.makedirs(videos_dir, exist_ok=True)
+    os.makedirs(videos_playlists_dir, exist_ok=True)
     os.makedirs(metadata_dir, exist_ok=True)
     while True:
         links = get_links()
@@ -129,9 +132,11 @@ Instrucciones:
         if audio_only:
             file_format = get_valid_option("Formato de audio (opus/mp3/m4a): ", ["opus", "mp3", "m4a"])
             media_dir = songs_dir
+            playlists_dir = songs_playlists_dir
         else:
             file_format = get_valid_option("Formato de video (mkv/mp4): ", ["mkv", "mp4"])
             media_dir = videos_dir
+            playlists_dir = videos_playlists_dir
         playlists = []
         canciones = []
         for link in links:
@@ -150,14 +155,14 @@ Instrucciones:
             download(playlist_link, True, audio_only, file_format, media_dir)
             media_files = get_downloaded_files(media_dir, before_files, file_format)
             move_playlist_metadata(media_dir, metadata_dir, playlist_name)
-            create_m3u_playlist(media_dir, playlist_name, media_files)
-            print(f"Playlist .m3u creada en: {os.path.join(media_dir, playlist_name)}.m3u\n")
-        # Procesar canciones individuales
+            create_m3u_playlist(playlists_dir, playlist_name, media_files)
+            print(f"Playlist .m3u creada en: {os.path.join(playlists_dir, playlist_name)}.m3u\n")
+        # Procesar canciones/videos individuales
         if canciones:
             for link in canciones:
                 print(f"Descargando: {link}")
                 download(link, False, audio_only, file_format, media_dir)
-            print("Descarga finalizada para canciones sueltas.\n")
+            print("Descarga finalizada para canciones/videos sueltos.\n")
 
 if __name__ == "__main__":
     main()
