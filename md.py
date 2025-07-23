@@ -83,6 +83,13 @@ def create_m3u_playlist(m3u_dir, playlist_name, media_files):
             rel_path = os.path.relpath(media_path, start=m3u_dir)
             m3u.write(f"{rel_path}\n")
 
+def remove_empty_dir(directory):
+    try:
+        if os.path.isdir(directory) and not os.listdir(directory):
+            os.rmdir(directory)
+    except Exception:
+        pass
+
 def main():
     print("=== Descargador de música/videos de YouTube ===")
     print("Escribe 'help' para ver instrucciones o presiona Enter para continuar.")
@@ -133,6 +140,9 @@ def main():
         # Mover todo al final del ciclo
         move_all_files(p["media"], storage[key]["media"])
         move_all_files(p["playlists"], storage[key]["playlists"])
+        # Eliminar directorios locales si están vacíos
+        remove_empty_dir(p["media"])
+        remove_empty_dir(p["playlists"])
         print("Archivos movidos a la memoria interna.")
 
 if __name__ == "__main__":
