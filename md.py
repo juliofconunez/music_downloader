@@ -1,7 +1,6 @@
 import os
 import yt_dlp
 import re
-import shutil
 
 def log_failed_download(link, reason):
     with open("failed_downloads.log", "a", encoding="utf-8") as log_file:
@@ -37,15 +36,14 @@ def get_links():
 def is_youtube_playlist(link):
     return "playlist?list=" in link or "&list=" in link
 
-def download(link, is_playlist, audio_only, file_format, songs_dir, archive_file="default.txt"):
+def download(link, is_playlist, audio_only, file_format, media_dir, archive_file):
     try:
         ext = f".{file_format}"
-        outtmpl = os.path.join(songs_dir, sanitize_filename('%(title)s.%(ext)s'))
+        outtmpl = os.path.join(media_dir, sanitize_filename('%(title)s.%(ext)s'))
         if audio_only:
             ydl_opts = {
                 'outtmpl': outtmpl,
                 'format': f'bestaudio[ext=webm]/bestaudio',
-                'writethumbnail': True,
                 'download_archive': archive_file,
                 'ignoreerrors': True,
                 'sleep_interval': 0.1,
@@ -54,14 +52,16 @@ def download(link, is_playlist, audio_only, file_format, songs_dir, archive_file
                 'postprocessors': [
                     {'key': 'FFmpegExtractAudio', 'preferredcodec': file_format},
                     {'key': 'FFmpegMetadata', 'add_metadata': True},
-                    {'key': 'EmbedThumbnail'},
                 ],
             }
+            # Solo para descargas individuales: embebe thumbnail
+            if not is_playlist:
+                ydl_opts['writethumbnail'] = True
+                ydl_opts['postprocessors'].append({'key': 'EmbedThumbnail'})
         else:
             ydl_opts = {
                 'outtmpl': outtmpl,
                 'format': 'bestvideo+bestaudio/best',
-                'writethumbnail': False,
                 'download_archive': archive_file,
                 'ignoreerrors': True,
                 'sleep_interval': 0.1,
@@ -73,33 +73,21 @@ def download(link, is_playlist, audio_only, file_format, songs_dir, archive_file
                     {'key': 'FFmpegMetadata', 'add_metadata': True},
                 ],
             }
+            # Solo para descargas individuales: embebe thumbnail
+            if not is_playlist:
+                ydl_opts['writethumbnail'] = True
+                ydl_opts['postprocessors'].append({'key': 'EmbedThumbnail'})
         with yt_dlp.YoutubeDL(ydl_opts) as ydl:
             ydl.download([link])
     except Exception as e:
         log_failed_download(link, str(e))
         print(f"Error al descargar {link}: {e}")
 
-def get_downloaded_files(songs_dir, before_files, file_format):
-    after_files = set(os.listdir(songs_dir))
+def get_downloaded_files(media_dir, before_files, file_format):
+    after_files = set(os.listdir(media_dir))
     new_files = after_files - before_files
     ext = f".{file_format}"
-    return [os.path.join(songs_dir, f) for f in sorted(new_files) if f.endswith(ext)]
-
-def move_playlist_metadata(songs_dir, meta_dir, playlist_name):
-    os.makedirs(meta_dir, exist_ok=True)
-    base = sanitize_filename(playlist_name)
-    thumb_path = None
-    for f in os.listdir(songs_dir):
-        if f.lower().endswith('.jpg') and base in f:
-            src = os.path.join(songs_dir, f)
-            dst = os.path.join(meta_dir, f"{base}.jpg")
-            try:
-                shutil.move(src, dst)
-                thumb_path = dst
-            except Exception:
-                pass
-    # No se usa la miniatura en el .m3u, pero se guarda por si la quieres usar manualmente
-    return thumb_path
+    return [os.path.join(media_dir, f) for f in sorted(new_files) if f.endswith(ext)]
 
 def main():
     print("=== Descargador de música/videos de YouTube ===")
@@ -116,12 +104,10 @@ Instrucciones:
     songs_playlists_dir = os.path.expanduser("~/storage/music/Playlists")
     videos_dir = os.path.expanduser("~/storage/movies/Videos")
     videos_playlists_dir = os.path.expanduser("~/storage/movies/Playlists")
-    metadata_dir = os.path.join(songs_playlists_dir, ".metadata")
     os.makedirs(songs_dir, exist_ok=True)
     os.makedirs(songs_playlists_dir, exist_ok=True)
     os.makedirs(videos_dir, exist_ok=True)
     os.makedirs(videos_playlists_dir, exist_ok=True)
-    os.makedirs(metadata_dir, exist_ok=True)
     songs_archive_file = "downloaded_songs_archive.txt"
     videos_archive_file = "downloaded_videos_archive.txt"
     while True:
@@ -162,7 +148,6 @@ Instrucciones:
             print(f"Descargando playlist: {playlist_link}")
             download(playlist_link, True, audio_only, file_format, media_dir, archive_file)
             media_files = get_downloaded_files(media_dir, before_files, file_format)
-            move_playlist_metadata(media_dir, metadata_dir, playlist_name)
             create_m3u_playlist(playlists_dir, playlist_name, media_files)
             print(f"Playlist .m3u creada en: {os.path.join(playlists_dir, playlist_name)}.m3u\n")
         # Procesar canciones/videos individuales
