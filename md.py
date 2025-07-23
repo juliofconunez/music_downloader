@@ -7,14 +7,14 @@ def log_failed_download(link, reason):
     with open("failed_downloads.log", "a", encoding="utf-8") as log_file:
         log_file.write(f"{link} - {reason}\n")
 
-def create_m3u_playlist(m3u_dir, playlist_name, song_files, meta_path=None):
+def create_m3u_playlist(m3u_dir, playlist_name, song_files):
     m3u_file = os.path.join(m3u_dir, f"{playlist_name}.m3u")
     with open(m3u_file, "w", encoding="utf-8") as m3u:
-        if meta_path:
-            m3u.write(f"#META_THUMBNAIL={meta_path}\n")
+        m3u.write("#EXTM3U\n")
         for song_path in song_files:
-            # Ruta relativa desde la carpeta de playlists
             rel_path = os.path.relpath(song_path, start=m3u_dir)
+            title = os.path.splitext(os.path.basename(song_path))[0]
+            m3u.write(f"#EXTINF:-1,{title}\n")
             m3u.write(rel_path + "\n")
 
 def sanitize_filename(filename):
@@ -101,10 +101,8 @@ def move_playlist_metadata(songs_dir, meta_dir, playlist_name):
                 thumb_path = dst
             except Exception:
                 pass
-    # Devuelve la ruta relativa al archivo de metadata (miniatura) si existe
-    if thumb_path:
-        return os.path.relpath(thumb_path, start=os.path.dirname(meta_dir))
-    return None
+    # No se usa la miniatura en el .m3u, pero se guarda por si la quieres usar manualmente
+    return thumb_path
 
 def main():
     print("=== Descargador de música/videos de YouTube ===")
@@ -153,15 +151,9 @@ Instrucciones:
             print(f"Descargando playlist: {playlist_link}")
             download(playlist_link, True, audio_only, file_format, songs_dir)
             song_files = get_downloaded_files(songs_dir, before_files, file_format)
-            # Usar rutas absolutas para calcular la ruta relativa
             song_files = [os.path.abspath(f) for f in song_files]
-            meta_thumb = move_playlist_metadata(songs_dir, metadata_dir, playlist_name)
-            # La ruta relativa de la miniatura (si existe) respecto a la carpeta de playlists
-            if meta_thumb:
-                meta_thumb_rel = os.path.relpath(meta_thumb, start=m3u_dir)
-            else:
-                meta_thumb_rel = None
-            create_m3u_playlist(m3u_dir, playlist_name, song_files, meta_thumb_rel)
+            move_playlist_metadata(songs_dir, metadata_dir, playlist_name)
+            create_m3u_playlist(m3u_dir, playlist_name, song_files)
             print(f"Descarga y playlist .m3u finalizadas para: {playlist_name}\n")
         # Procesar canciones individuales
         if canciones:
