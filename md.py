@@ -31,10 +31,10 @@ def remove_leftover_images(media_dir):
             except Exception: pass
 
 def download(link, is_playlist, audio_only, file_format, media_dir):
-    outtmpl = os.path.join(media_dir, '%(title)s [%(id)s].%(ext)s')
+    outtmpl = os.path.join(media_dir, sanitize_filename('%(title)s [%(id)s].%(ext)s'))
     ydl_opts = {
         'outtmpl': outtmpl,
-        'format': f'bestaudio[ext=webm]/bestaudio' if audio_only else 'bestvideo+bestaudio/best',
+        'format': 'bestaudio/best' if audio_only else 'bestvideo+bestaudio/best',
         'ignoreerrors': True,
         'sleep_interval': 0.1,
         'max_sleep_interval': 1,
@@ -63,7 +63,7 @@ def main():
     if input().strip().lower() == "help":
         print("Instrucciones:\n- Pega enlaces de YouTube (uno por línea).\n- El programa detecta playlists o canciones.\n- Elige solo audio o audio+video.\n")
     storage = {
-        "audio": {"media": os.path.expanduser("~/storage/music/Songs"), "playlists": os.path.expanduser("~/storage/music/Playlists"), "format": "opus"},
+        "audio": {"media": os.path.expanduser("~/storage/music/Songs"), "playlists": os.path.expanduser("~/storage/music/Playlists"), "format": "mp3"},
         "video": {"media": os.path.expanduser("~/storage/movies/Videos"), "playlists": os.path.expanduser("~/storage/movies/Playlists"), "format": "mp4"},
     }
     for k in storage:
