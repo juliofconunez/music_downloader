@@ -10,7 +10,6 @@ def create_m3u_playlist(m3u_dir, playlist_name, media_files):
     m3u_file = os.path.join(m3u_dir, f"{playlist_name}.m3u")
     with open(m3u_file, "w", encoding="utf-8") as m3u:
         for media_path in media_files:
-            # Calcula la ruta relativa desde la carpeta de playlists
             rel_path = os.path.relpath(media_path, start=m3u_dir)
             m3u.write(f"{rel_path}\n")
 
@@ -37,10 +36,28 @@ def get_links():
 def is_youtube_playlist(link):
     return "playlist?list=" in link or "&list=" in link
 
+def get_yt_playlist_ids(playlist_url):
+    ydl_opts = {'quiet': True, 'extract_flat': True, 'skip_download': True}
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        info = ydl.extract_info(playlist_url, download=False)
+        entries = info.get('entries', info.get('items', []))
+        return [entry['id'] for entry in entries if 'id' in entry]
+
+def find_files_by_ids(media_dir, yt_ids, file_format):
+    files = []
+    for fname in os.listdir(media_dir):
+        if fname.endswith(f".{file_format}"):
+            for yt_id in yt_ids:
+                if yt_id in fname:
+                    files.append(os.path.join(media_dir, fname))
+                    break
+    return files
+
 def download(link, is_playlist, audio_only, file_format, media_dir, archive_file):
     try:
         ext = f".{file_format}"
-        outtmpl = os.path.join(media_dir, sanitize_filename('%(title)s.%(ext)s'))
+        # Incluye el ID de YouTube en el nombre del archivo para fácil identificación
+        outtmpl = os.path.join(media_dir, '%(title)s [%(id)s].%(ext)s')
         if audio_only:
             ydl_opts = {
                 'outtmpl': outtmpl,
@@ -145,11 +162,14 @@ Instrucciones:
             if not playlist_name:
                 print("Debes ingresar un nombre para la playlist.")
                 continue
-            before_files = set(os.listdir(media_dir))
+            # Obtener los IDs de la playlist de YouTube
+            yt_ids = get_yt_playlist_ids(playlist_link)
+            # Descargar (solo descargará los que faltan)
             print(f"Descargando playlist: {playlist_link}")
             download(playlist_link, True, audio_only, file_format, media_dir, archive_file)
-            media_files = get_downloaded_files(media_dir, before_files, file_format)
-            create_m3u_playlist(playlists_dir, playlist_name, media_files)
+            # Buscar todos los archivos locales que correspondan a los IDs de la playlist
+            all_files = find_files_by_ids(media_dir, yt_ids, file_format)
+            create_m3u_playlist(playlists_dir, playlist_name, all_files)
             print(f"Playlist .m3u creada en: {os.path.join(playlists_dir, playlist_name)}.m3u\n")
         # Procesar canciones/videos individuales
         if canciones:
