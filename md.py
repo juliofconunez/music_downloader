@@ -122,13 +122,17 @@ def main():
             for album in album_links:
                 playlist_name, playlist_link = album['playlist_name'], album['link']
                 print(f"Procesando álbum: {playlist_name}")
+                # Crear subcarpeta para el álbum dentro de Songs
+                album_dir = os.path.join(storage["audio"]["media"], sanitize_filename(playlist_name))
+                os.makedirs(album_dir, exist_ok=True)
                 yt_playlist_name, yt_ids = get_yt_playlist_info(playlist_link)
                 files = []
                 for yt_id in yt_ids:
-                    fpath = find_file_by_id(p["media"], yt_id)
+                    fpath = find_file_by_id(album_dir, yt_id)
                     if not fpath:
-                        download(f"https://www.youtube.com/watch?v={yt_id}", False, key == "audio", p["format"], p["media"], cookies_file)
-                        fpath = find_file_by_id(p["media"], yt_id)
+                        # Descargar en la subcarpeta del álbum
+                        download(f"https://www.youtube.com/watch?v={yt_id}", False, True, storage["audio"]["format"], album_dir, cookies_file)
+                        fpath = find_file_by_id(album_dir, yt_id)
                     if fpath:
                         files.append(fpath)
                 create_m3u_playlist(p["playlists"], playlist_name, files)
