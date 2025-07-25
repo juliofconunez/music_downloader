@@ -10,10 +10,11 @@ BIN_DIR="$PREFIX/bin"
 BIN_PATH="$BIN_DIR/$CMD_NAME"
 
 
+
 # Instalar dependencias necesarias
 echo "Instalando dependencias necesarias..."
 pkg install -y python ffmpeg
-pip install --upgrade yt-dlp
+pip3 install --upgrade yt-dlp ffmpeg-python
 
 # Copia el script y da permisos de ejecución
 cp "$SCRIPT_SRC" "$BIN_PATH"
