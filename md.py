@@ -99,7 +99,7 @@ def main():
     else:
         print(f"Usando cookies de YouTube Premium: {cookies_file}")
 
-    albums_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "discos")
+    albums_dir = os.path.expanduser("~/discos")
     print(f"Buscando álbumes en: {albums_dir}")
     if not os.path.isdir(albums_dir):
         print(f"La carpeta 'discos' no existe en: {albums_dir}")
