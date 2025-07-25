@@ -99,17 +99,22 @@ def main():
     else:
         print(f"Usando cookies de YouTube Premium: {cookies_file}")
 
-    albums_dir = os.path.join(os.path.dirname(__file__), "Albums")
+    albums_dir = os.path.join(os.path.dirname(os.path.abspath(__file__)), "discos")
+    print(f"Buscando álbumes en: {albums_dir}")
+    if not os.path.isdir(albums_dir):
+        print(f"La carpeta 'discos' no existe en: {albums_dir}")
+        print("Por favor crea la carpeta y agrega archivos .json de álbumes.")
+        return
 
     while True:
         print("¿Qué deseas hacer?")
         print("1) Ingresar links manualmente")
-        print("2) Descargar todos los álbumes de la carpeta Albums")
+        print("2) Descargar todos los álbumes de la carpeta discos")
         opcion = input("Elige una opción [1/2]: ").strip()
         if opcion == "2":
             album_links = get_album_links_from_json(albums_dir)
             if not album_links:
-                print("No se encontraron álbumes en la carpeta Albums.")
+                print("No se encontraron álbumes en la carpeta discos.")
                 continue
             modo = input("¿Solo audio o audio+video? (1) Solo audio, (2) Audio+Video [1/2]: ").strip()
             key = "audio" if modo == "1" else "video"
