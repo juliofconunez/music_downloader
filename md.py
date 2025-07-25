@@ -1,3 +1,5 @@
+#!/data/data/com.termux/files/usr/bin/python3
+# -*- coding: utf-8 -*-
 import os
 import yt_dlp
 import re
