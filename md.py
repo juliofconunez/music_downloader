@@ -94,6 +94,22 @@ def main():
                     files.append(fpath)
             create_m3u_playlist(p["playlists"], playlist_name, files)
             print(f"Playlist .m3u creada en: {os.path.join(p['playlists'], playlist_name)}.m3u\n")
+        # Variables para la lógica de playlist individual
+        crear_playlist_individual = False
+        playlist_name_individual = None
+        canciones_files = []
+        # Si hay más de un link individual, pregunta si se quiere crear una playlist
+        if len(canciones) > 1:
+            resp = input("¿Quieres crear una playlist con estos archivos individuales? (s/n): ").strip().lower()
+            if resp == "s":
+                # Solicita el nombre de la playlist hasta que sea válido (no vacío)
+                while True:
+                    playlist_name_individual = input("Nombre para la playlist: ").strip()
+                    if playlist_name_individual:
+                        break
+                    print("Por favor ingresa un nombre válido para la playlist.")
+                crear_playlist_individual = True
+        # Descarga los archivos individuales y guarda sus rutas para la playlist si corresponde
         for link in canciones:
             print(f"Procesando: {link}")
             with yt_dlp.YoutubeDL({'quiet': True, 'skip_download': True}) as ydl:
@@ -102,8 +118,15 @@ def main():
             fpath = find_file_by_id(p["media"], yt_id)
             if not fpath:
                 download(link, False, key == "audio", p["format"], p["media"])
+                fpath = find_file_by_id(p["media"], yt_id)
+            if fpath:
+                canciones_files.append(fpath)
         if canciones:
             print("Descarga finalizada para canciones/videos sueltos.\n")
+            # Si el usuario eligió crear la playlist, se genera el archivo .m3u
+            if crear_playlist_individual and playlist_name_individual:
+                create_m3u_playlist(p["playlists"], playlist_name_individual, canciones_files)
+                print(f"Playlist .m3u creada en: {os.path.join(p['playlists'], playlist_name_individual)}.m3u\n")
 
 if __name__ == "__main__":
     main()
