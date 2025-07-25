@@ -32,7 +32,7 @@ def remove_leftover_images(media_dir):
             try: os.remove(os.path.join(media_dir, fname))
             except Exception: pass
 
-def download(link, is_playlist, audio_only, file_format, media_dir):
+def download(link, is_playlist, audio_only, file_format, media_dir, cookies_file=None):
     outtmpl = os.path.join(media_dir, sanitize_filename('%(title)s [%(id)s].%(ext)s'))
     ydl_opts = {
         'outtmpl': outtmpl,
@@ -48,6 +48,11 @@ def download(link, is_playlist, audio_only, file_format, media_dir):
             {'key': 'EmbedThumbnail'},
         ],
     }
+    
+    # Si se proporciona un archivo de cookies, agregarlo a las opciones
+    if cookies_file and os.path.exists(cookies_file):
+        ydl_opts['cookiefile'] = cookies_file
+    
     with yt_dlp.YoutubeDL(ydl_opts) as ydl:
         ydl.download([link])
     remove_leftover_images(media_dir)
@@ -65,12 +70,20 @@ def main():
     if input().strip().lower() == "help":
         print("Instrucciones:\n- Pega enlaces de YouTube (uno por línea).\n- El programa detecta playlists o canciones.\n- Elige solo audio o audio+video.\n")
     storage = {
-        "audio": {"media": os.path.expanduser("~/storage/music/Songs"), "playlists": os.path.expanduser("~/storage/music/Playlists"), "format": "mp3"},
+        "audio": {"media": os.path.expanduser("~/storage/music/Songs"), "playlists": os.path.expanduser("~/storage/music/Playlists"), "format": "opus"},
         "video": {"media": os.path.expanduser("~/storage/movies/Videos"), "playlists": os.path.expanduser("~/storage/movies/Playlists"), "format": "mp4"},
     }
     for k in storage:
         os.makedirs(storage[k]["media"], exist_ok=True)
         os.makedirs(storage[k]["playlists"], exist_ok=True)
+    
+    # Verificar si existe archivo de cookies para YouTube Premium
+    cookies_file = os.path.expanduser("~/cookies.txt")
+    if not os.path.exists(cookies_file):
+        cookies_file = None
+    else:
+        print(f"Usando cookies de YouTube Premium: {cookies_file}")
+    
     while True:
         links = get_links()
         if not links:
@@ -90,7 +103,7 @@ def main():
                 fpath = find_file_by_id(p["media"], yt_id)
                 if not fpath:
                     # Descarga solo el video/canción faltante
-                    download(f"https://www.youtube.com/watch?v={yt_id}", False, key == "audio", p["format"], p["media"])
+                    download(f"https://www.youtube.com/watch?v={yt_id}", False, key == "audio", p["format"], p["media"], cookies_file)
                     fpath = find_file_by_id(p["media"], yt_id)
                 if fpath:
                     files.append(fpath)
@@ -119,7 +132,7 @@ def main():
                 yt_id = info['id']
             fpath = find_file_by_id(p["media"], yt_id)
             if not fpath:
-                download(link, False, key == "audio", p["format"], p["media"])
+                download(link, False, key == "audio", p["format"], p["media"], cookies_file)
                 fpath = find_file_by_id(p["media"], yt_id)
             if fpath:
                 canciones_files.append(fpath)
