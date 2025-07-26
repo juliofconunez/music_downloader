@@ -124,16 +124,41 @@ def main():
             for album in album_links:
                 playlist_name, playlist_link = album['playlist_name'], album['link']
                 print(f"Procesando álbum: {playlist_name}")
-                # Crear subcarpeta para el álbum dentro de Songs
                 album_dir = os.path.join(storage["audio"]["media"], sanitize_filename(playlist_name))
                 os.makedirs(album_dir, exist_ok=True)
-                yt_playlist_name, yt_ids = get_yt_playlist_info(playlist_link)
                 files = []
-                for yt_id in yt_ids:
+                # Si es playlist de YouTube
+                if is_youtube_playlist(playlist_link):
+                    yt_playlist_name, yt_ids = get_yt_playlist_info(playlist_link)
+                    for yt_id in yt_ids:
+                        fpath = find_file_by_id(album_dir, yt_id)
+                        if not fpath:
+                            download(f"https://www.youtube.com/watch?v={yt_id}", False, True, storage["audio"]["format"], album_dir, cookies_file)
+                            fpath = find_file_by_id(album_dir, yt_id)
+                        if fpath:
+                            files.append(fpath)
+                # Si es una lista de videos individuales
+                elif isinstance(playlist_link, list):
+                    for video_link in playlist_link:
+                        print(f"Procesando video: {video_link}")
+                        with yt_dlp.YoutubeDL({'quiet': True, 'skip_download': True}) as ydl:
+                            info = ydl.extract_info(video_link, download=False)
+                            yt_id = info['id']
+                        fpath = find_file_by_id(album_dir, yt_id)
+                        if not fpath:
+                            download(video_link, False, True, storage["audio"]["format"], album_dir, cookies_file)
+                            fpath = find_file_by_id(album_dir, yt_id)
+                        if fpath:
+                            files.append(fpath)
+                # Si es un solo link de video individual
+                else:
+                    print(f"Procesando video: {playlist_link}")
+                    with yt_dlp.YoutubeDL({'quiet': True, 'skip_download': True}) as ydl:
+                        info = ydl.extract_info(playlist_link, download=False)
+                        yt_id = info['id']
                     fpath = find_file_by_id(album_dir, yt_id)
                     if not fpath:
-                        # Descargar en la subcarpeta del álbum
-                        download(f"https://www.youtube.com/watch?v={yt_id}", False, True, storage["audio"]["format"], album_dir, cookies_file)
+                        download(playlist_link, False, True, storage["audio"]["format"], album_dir, cookies_file)
                         fpath = find_file_by_id(album_dir, yt_id)
                     if fpath:
                         files.append(fpath)
