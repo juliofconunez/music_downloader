@@ -1,6 +1,18 @@
 [
-  {"playlist_name": "Ordinary Man", "link": "OLAK5uy_nEIUXwG4Nm9_fbU6GFhJCVhJMj4iFxFYs"},
-  {"playlist_name": "AfterLife", "link": "OLAK5uy_nBO9jjGEcCDw584U3gW3AD3TKjbtZxUX0"},
-  {"playlist_name": "The Stranger", "link": "OLAK5uy_mLHjM5NsmwIHi3xPaTwme_7YCcgSTjafo"},
-  {"playlist_name": "Background", "link": "PLLXguAz8nvimS74N8mj0OIrkhfmxe0ggU"}
+  {"playlist_name": "Ordinary Man", "link": "https://www.youtube.com/playlist?list=OLAK5uy_nEIUXwG4Nm9_fbU6GFhJCVhJMj4iFxFYs"},
+  {"playlist_name": "AfterLife", "link": "https://www.youtube.com/playlist?list=OLAK5uy_nBO9jjGEcCDw584U3gW3AD3TKjbtZxUX0"},
+  {"playlist_name": "The Stranger", "link": "https://www.youtube.com/playlist?list=OLAK5uy_mLHjM5NsmwIHi3xPaTwme_7YCcgSTjafo"},
+  {"playlist_name": "Back Chill", "link": "https://www.youtube.com/playlist?list=PLLXguAz8nvimS74N8mj0OIrkhfmxe0ggU&si=veoT2_uZqWol2qrF"},
+  {"playlist_name": "Back Work/Sleep", "link": [
+                                            "https://youtu.be/06hhwrVSBPg?si=9JyRTvSgZhTSp6nB",
+                                            "https://youtu.be/QM1VLD16tDU?si=7_r4X0B4XJ9MXUxn",
+                                            "https://youtu.be/rhXX0q3ebiQ?si=620HbShugregreAI",
+                                            "https://youtu.be/F5lPywAN5cw?si=GunphFzIcALgpUOG",
+                                            "https://youtu.be/5_4KRUx2iKY?si=WnWnViX9kjtByCa8",
+                                            "https://youtu.be/TrB3vH0WkZI?si=INI6h380UgmY1lRx",
+                                            "https://youtu.be/a4tNJTZHzPg?si=NP2n02kGd8iMcoPW",
+                                            "https://youtu.be/dZ2NQ-xQINI?si=Z3ebAOZ41eCbFeZ2",
+                                            "https://youtu.be/UEiPOIw5ahc?si=w9CviAWgNNTyS8cU"
+                                          ]
+  }
 ]

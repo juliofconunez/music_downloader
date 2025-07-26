@@ -14,9 +14,11 @@ def get_album_links_from_json(albums_dir):
                 playlist_name = entry.get('playlist_name')
                 link_id = entry.get('link')
                 if playlist_name and link_id:
-                    # Construir el link completo de YouTube
-                    full_link = f"https://www.youtube.com/playlist?list={link_id}"
-                    album_links.append({'playlist_name': playlist_name, 'link': full_link})
+                    if isinstance(link_id, list):
+                        for lid in link_id:
+                            album_links.append({'playlist_name': playlist_name, 'link': lid})
+                    else:
+                        album_links.append({'playlist_name': playlist_name, 'link': link_id})
     return album_links
 
 def sanitize_filename(filename):
