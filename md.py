@@ -53,7 +53,8 @@ def download(link, is_playlist, audio_only, file_format, media_dir, cookies_file
     outtmpl = os.path.join(media_dir, sanitize_filename('%(title)s [%(id)s].%(ext)s'))
     ydl_opts = {
         'outtmpl': outtmpl,
-        'format': 'bestaudio/best' if audio_only else 'bestvideo+bestaudio/best',
+        # Limitar calidad de video a 720p si es video, audio igual que antes
+        'format': 'bestaudio/best' if audio_only else 'bestvideo[height<=720]+bestaudio/best[height<=720]',
         'ignoreerrors': True,
         'sleep_interval': 0.1,
         'max_sleep_interval': 1,
