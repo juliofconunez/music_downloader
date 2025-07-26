@@ -14,5 +14,9 @@
                                             "https://youtu.be/dZ2NQ-xQINI?si=Z3ebAOZ41eCbFeZ2",
                                             "https://youtu.be/UEiPOIw5ahc?si=w9CviAWgNNTyS8cU"
                                           ]
-  }
+  },
+  {"playlist_name": "Rock", "link": "https://music.youtube.com/playlist?list=PLLXguAz8nvilkJg1LpJKK95OK7qwSGlEf&si=Ug4rdIidJQb4ObJC"},
+  {"playlist_name": "Melodic Dubstep", "link": "https://music.youtube.com/playlist?list=PLb5_DKviAXovc1SSUAUBVz0KYXTn0qaLN&si=PRo5_8bwuVpKeG9T"}
+
+
 ]
