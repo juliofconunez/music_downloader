@@ -57,7 +57,7 @@ def download(link, is_playlist, audio_only, file_format, media_dir, cookies_file
         'format': 'bestaudio/best' if audio_only else 'bestvideo[height<=720]+bestaudio/best[height<=720]',
         'ignoreerrors': True,
         'sleep_interval': 0.1,
-        'max_sleep_interval': 1,
+        'max_sleep_interval': 2,
         'noplaylist': not is_playlist,
         'writethumbnail': True,
         'postprocessors': [
